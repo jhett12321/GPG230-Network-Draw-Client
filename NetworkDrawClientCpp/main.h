@@ -6,6 +6,6 @@
 extern bool connected;
 extern unsigned short port;
 extern unsigned short listenPort;
-extern sf::IpAddress recipient;
+extern sf::IpAddress* recipient;
 
 #endif

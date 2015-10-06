@@ -10,7 +10,7 @@ void SendManager::AddPacketData(char* data, size_t length)
 
 void SendManager::SendImmediate(char* data, size_t length)
 {
-	if (socket.send(data, length, recipient, port) != sf::Socket::Done)
+	if (socket.send(data, length, *recipient, port) != sf::Socket::Done)
 	{
 		std::cout << "Error sending data" << std::endl;
 	}
@@ -29,7 +29,7 @@ void SendManager::ProcessQueue()
 			m_queuedPacketSize.pop();
 
 			//TODO Bundle packets together.
-			if (socket.send(data, length, recipient, port) != sf::Socket::Done)
+			if (socket.send(data, length, *recipient, port) != sf::Socket::Done)
 			{
 				std::cout << "Error sending data" << std::endl;
 			}

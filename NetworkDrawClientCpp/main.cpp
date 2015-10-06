@@ -7,6 +7,7 @@
 bool connected = false;
 unsigned short port = 1360;
 unsigned short listenPort = 1360; //Default. Should be changed during binding.
+sf::IpAddress* recipient;
 
 enum Mode
 {
@@ -16,8 +17,7 @@ enum Mode
 	CIRCLE
 };
 
-
-void DrawLogic(sf::Vector2i startPos, Mode mode, bool clicked, sf::RenderWindow window, SendManager sendManager)
+void DrawLogic(sf::Vector2i* startPos, Mode mode, bool clicked, sf::RenderWindow* window, SendManager* sendManager)
 {
 	if (!clicked)
 	{
@@ -46,7 +46,7 @@ void DrawLogic(sf::Vector2i startPos, Mode mode, bool clicked, sf::RenderWindow 
 	{
 		clicked = true;
 
-		startPos = sf::Mouse::getPosition(window);
+		*startPos = sf::Mouse::getPosition(*window);
 	}
 
 	switch (mode)
@@ -57,7 +57,7 @@ void DrawLogic(sf::Vector2i startPos, Mode mode, bool clicked, sf::RenderWindow 
 			{
 				PacketPixel pixel;
 				pixel.type = Packet::e_pixel;
-				sf::Vector2i pos = sf::Mouse::getPosition(window);
+				sf::Vector2i pos = sf::Mouse::getPosition(*window);
 
 				pixel.x = pos.x;
 				pixel.y = pos.y;
@@ -66,7 +66,7 @@ void DrawLogic(sf::Vector2i startPos, Mode mode, bool clicked, sf::RenderWindow 
 				pixel.g = 0.0f;
 				pixel.b = 0.5f;
 
-				sendManager.AddPacketData((char*)&pixel, sizeof(pixel));
+				sendManager->AddPacketData((char*)&pixel, sizeof(pixel));
 				delete &pixel;
 			}
 
@@ -85,37 +85,37 @@ void DrawLogic(sf::Vector2i startPos, Mode mode, bool clicked, sf::RenderWindow 
 
 				box.type = Packet::e_box;
 
-				sf::Vector2i currentPos = sf::Mouse::getPosition(window);
+				sf::Vector2i currentPos = sf::Mouse::getPosition(*window);
 
-				if (startPos.x < currentPos.x)
+				if (startPos->x < currentPos.x)
 				{
-					box.x = startPos.x;
-					box.w = currentPos.x - startPos.x;
+					box.x = startPos->x;
+					box.w = currentPos.x - startPos->x;
 				}
 
 				else
 				{
 					box.x = currentPos.x;
-					box.w = startPos.x - currentPos.x;
+					box.w = startPos->x - currentPos.x;
 				}
 
-				if (startPos.y < currentPos.y)
+				if (startPos->y < currentPos.y)
 				{
-					box.y = startPos.y;
-					box.h = currentPos.y - startPos.y;
+					box.y = startPos->y;
+					box.h = currentPos.y - startPos->y;
 				}
 
 				else
 				{
 					box.y = currentPos.y;
-					box.h = startPos.y - currentPos.y;
+					box.h = startPos->y - currentPos.y;
 				}
 
 				box.r = 1.0f;
 				box.g = 0.0f;
 				box.b = 1.0f;
 
-				sendManager.AddPacketData((char*)&box, sizeof(box));
+				sendManager->AddPacketData((char*)&box, sizeof(box));
 
 				clicked = false;
 				delete &box;
@@ -131,17 +131,17 @@ void DrawLogic(sf::Vector2i startPos, Mode mode, bool clicked, sf::RenderWindow 
 
 				line.type = Packet::e_line;
 
-				line.x1 = startPos.x;
-				line.y1 = startPos.y;
+				line.x1 = startPos->x;
+				line.y1 = startPos->y;
 
-				line.x2 = sf::Mouse::getPosition(window).x;
-				line.y2 = sf::Mouse::getPosition(window).y;
+				line.x2 = sf::Mouse::getPosition(*window).x;
+				line.y2 = sf::Mouse::getPosition(*window).y;
 
 				line.r = 1.0f;
 				line.g = 0.0f;
 				line.b = 0.0f;
 
-				sendManager.AddPacketData((char*)&line, sizeof(line));
+				sendManager->AddPacketData((char*)&line, sizeof(line));
 
 				clicked = false;
 			}
@@ -156,8 +156,8 @@ void DrawLogic(sf::Vector2i startPos, Mode mode, bool clicked, sf::RenderWindow 
 
 				circle.type = Packet::e_circle;
 
-				circle.x = startPos.x;
-				circle.y = startPos.y;
+				circle.x = startPos->x;
+				circle.y = startPos->y;
 
 				circle.radius = 20; //TODO change to mouse pos.
 
@@ -168,7 +168,7 @@ void DrawLogic(sf::Vector2i startPos, Mode mode, bool clicked, sf::RenderWindow 
 				circle.g = 1.0f;
 				circle.b = 0.0f;
 
-				sendManager.AddPacketData((char*)&circle, sizeof(circle));
+				sendManager->AddPacketData((char*)&circle, sizeof(circle));
 
 				clicked = false;
 
@@ -188,6 +188,7 @@ int main()
 	{
 		return 0;
 	}
+
 	listenPort = receiveSocket.getLocalPort();
 
 	//We found an available port. Create our draw window and initialize packet sending;
@@ -257,7 +258,7 @@ int main()
 				}
 
 				//Do Drawing Logic
-				DrawLogic(startPos, mode, clicked, window, sendManager);
+				DrawLogic(&startPos, mode, clicked, &window, &sendManager);
 			}
 		}
 
@@ -269,12 +270,12 @@ int main()
 
 			sf::IpAddress sender;
 
-			bool result = receiveSocket.receive(data, 100, received, sender, listenPort);
+			sf::Socket::Status result = receiveSocket.receive(data, 100, received, sender, listenPort);
 
 			if (result == sf::Socket::Done)
 			{
 				//TODO read data and verify it is a correct packet.
-				recipient = sender;
+				recipient = &sender;
 				connected = true;
 			}
 

@@ -7,9 +7,6 @@
 class SendManager
 {
 public:
-	SendManager();
-	~SendManager();
-
 	sf::UdpSocket socket;
 
 	std::queue<char*> m_queuedPackets;
