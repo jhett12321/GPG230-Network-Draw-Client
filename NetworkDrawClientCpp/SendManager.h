@@ -7,10 +7,7 @@
 class SendManager
 {
 public:
-	sf::UdpSocket socket;
-
-	std::queue<char*> m_queuedPackets;
-	std::queue<size_t> m_queuedPacketSize;
+	std::queue<std::string> m_queuedPackets;
 
 	void ProcessQueue();
 	void AddPacketData(char* data, size_t length);

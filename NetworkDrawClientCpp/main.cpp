@@ -5,9 +5,10 @@
 #include <iostream>
 
 bool connected = false;
-unsigned short port = 1360;
-unsigned short listenPort = 1360; //Default. Should be changed during binding.
-sf::IpAddress* recipient;
+unsigned short port = 1300;
+unsigned short listenPort = 1300; //Default. Should be changed during binding.
+sf::IpAddress recipient = sf::IpAddress::Broadcast;
+sf::UdpSocket socket;
 
 enum Mode
 {
@@ -17,7 +18,7 @@ enum Mode
 	CIRCLE
 };
 
-void DrawLogic(sf::Vector2i* startPos, Mode mode, bool clicked, sf::RenderWindow* window, SendManager* sendManager)
+void DrawLogic(sf::Vector2i* startPos, Mode& mode, bool& clicked, sf::RenderWindow* window, SendManager* sendManager)
 {
 	if (!clicked)
 	{
@@ -67,13 +68,8 @@ void DrawLogic(sf::Vector2i* startPos, Mode mode, bool clicked, sf::RenderWindow
 				pixel.b = 0.5f;
 
 				sendManager->AddPacketData((char*)&pixel, sizeof(pixel));
-				delete &pixel;
 			}
 
-			else
-			{
-				clicked = false;
-			}
 
 			break;
 		}
@@ -117,8 +113,7 @@ void DrawLogic(sf::Vector2i* startPos, Mode mode, bool clicked, sf::RenderWindow
 
 				sendManager->AddPacketData((char*)&box, sizeof(box));
 
-				clicked = false;
-				delete &box;
+		
 			}
 
 			break;
@@ -143,7 +138,7 @@ void DrawLogic(sf::Vector2i* startPos, Mode mode, bool clicked, sf::RenderWindow
 
 				sendManager->AddPacketData((char*)&line, sizeof(line));
 
-				clicked = false;
+			
 			}
 
 			break;
@@ -159,37 +154,71 @@ void DrawLogic(sf::Vector2i* startPos, Mode mode, bool clicked, sf::RenderWindow
 				circle.x = startPos->x;
 				circle.y = startPos->y;
 
-				circle.radius = 20; //TODO change to mouse pos.
+				sf::Vector2i currentPos = sf::Mouse::getPosition(*window);
 
-				//circle.w = .x - startPos.x;
-				//circle.h = sf::Mouse::getPosition(window).y - startPos.y;
+				float currentRadius = 0.0f;
 
-				circle.r = 0.0f;
-				circle.g = 1.0f;
-				circle.b = 0.0f;
+				if (startPos->x < currentPos.x)
+				{
+					currentRadius = currentPos.x - startPos->x;
+				}
+
+				else
+				{
+					currentRadius = startPos->x - currentPos.x;
+				}
+
+				if (startPos->y < currentPos.y)
+				{
+					if (currentRadius < currentPos.y - startPos->y)
+					{
+						currentRadius = currentPos.y - startPos->y;
+					}
+				}
+
+				else
+				{
+					if (currentRadius < startPos->y - currentPos.y)
+					{
+						currentRadius = startPos->y - currentPos.y;
+					}
+				}
+
+				circle.radius = currentRadius;
+
+				circle.r = 1.0f;
+				circle.g = 0.0f;
+				circle.b = 1.0f;
 
 				sendManager->AddPacketData((char*)&circle, sizeof(circle));
 
-				clicked = false;
-
-				break;
+			
 			}
+
+			break;
 		}
+	}
+
+	if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+	{
+		if (clicked)
+			clicked = false;
 	}
 }
 
 int main()
 {
-	sf::UdpSocket receiveSocket;
-	receiveSocket.setBlocking(false);
+	recipient = sf::IpAddress::Broadcast;
+
+	socket.setBlocking(false);
 
 	// bind the socket to a port. If we can't bind, don't continue.
-	if (receiveSocket.bind(sf::Socket::AnyPort) != sf::Socket::Done)
+	if (socket.bind(sf::Socket::AnyPort) != sf::Socket::Done)
 	{
 		return 0;
 	}
 
-	listenPort = receiveSocket.getLocalPort();
+	listenPort = socket.getLocalPort();
 
 	//We found an available port. Create our draw window and initialize packet sending;
 	sf::RenderWindow window(sf::VideoMode(512, 512), "Network Draw Client (CPP)");
@@ -256,10 +285,10 @@ int main()
 				{
 					mouseMoved = true;
 				}
-
-				//Do Drawing Logic
-				DrawLogic(&startPos, mode, clicked, &window, &sendManager);
 			}
+
+			//Do Drawing Logic
+			DrawLogic(&startPos, mode, clicked, &window, &sendManager);
 		}
 
 		//We are not connected. Check to see if we have received a response to our announce packet to finish handshaking.
@@ -270,12 +299,12 @@ int main()
 
 			sf::IpAddress sender;
 
-			sf::Socket::Status result = receiveSocket.receive(data, 100, received, sender, listenPort);
+			sf::Socket::Status result = socket.receive(data, 100, received, sender, listenPort);
 
 			if (result == sf::Socket::Done)
 			{
 				//TODO read data and verify it is a correct packet.
-				recipient = &sender;
+				recipient = sender;
 				connected = true;
 			}
 
@@ -284,6 +313,8 @@ int main()
 				std::cout << "Error receiving data" << std::endl;
 			}
 		}
+
+		window.display();
 	}
 
 	return 0;
