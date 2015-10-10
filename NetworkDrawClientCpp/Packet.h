@@ -1,3 +1,6 @@
+#ifndef PACKET_H
+#define PACKET_H
+
 #pragma pack(push,1)
 class CursorInfo
 {
@@ -99,3 +102,4 @@ public:
 };
 
 #pragma pack(pop)
+#endif

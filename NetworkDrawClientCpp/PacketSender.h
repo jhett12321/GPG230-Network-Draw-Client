@@ -1,10 +1,10 @@
-#ifndef SENDMGR_H
-#define SENDMGR_H
+#ifndef PACKETSENDER_H
+#define PACKETSENDER_H
 
 #include <queue>
 #include "SFML\Network.hpp"
 
-class SendManager
+class PacketSender
 {
 public:
 	std::queue<std::string> m_queuedPackets;
@@ -12,6 +12,9 @@ public:
 	void ProcessQueue();
 	void AddPacketData(char* data, size_t length);
 	void SendImmediate(char* data, size_t length);
+
+	sf::Clock timer;
+	float sendInterval = 0.05f;
 };
 
 #endif

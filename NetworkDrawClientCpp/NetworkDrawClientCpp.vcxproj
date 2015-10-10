@@ -84,13 +84,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DrawInput.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="SendManager.cpp" />
+    <ClCompile Include="PacketListener.cpp" />
+    <ClCompile Include="PacketSender.cpp" />
+    <ClCompile Include="Common.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="main.h" />
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="DrawInput.h" />
     <ClInclude Include="Packet.h" />
-    <ClInclude Include="SendManager.h" />
+    <ClInclude Include="PacketListener.h" />
+    <ClInclude Include="PacketSender.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
