@@ -11,21 +11,29 @@ int main()
 		return 0;
 	}
 
-	//Common objects are ready. Initialize send timers, and initial packets.
+	//Common timer. Used for the initial handshake, and queueing packets.
 	sf::Clock timer;
-	float sendInterval = 0.05f;
 
-	//Send our initial "announce" packet. When we receive a response, we can process our queue.
-	PacketClientAnnounce clientAnnounce;
-	clientAnnounce.type = Packet::e_clientAnnounce;
-
-	Common::packetSender->SendImmediate((char*)&clientAnnounce, sizeof(clientAnnounce));
+	float sendInterval = 0.05f;					//How often to bundle and send our queued packets.
+	float initialAnnounceInterval = 2.0f;		//How often to attempt an initial handshake.
+	
+	//Create our initial "announce" packet. When we receive a response, we can process our queue.
+	//This is sent in our main loop.
+	PacketClientAnnounce* clientAnnounce = new PacketClientAnnounce();
+	clientAnnounce->type = Packet::e_clientAnnounce;
 
 	while (Common::window->isOpen())
 	{
 		//We are connected and can now send shape & cursor data.
 		if (Common::connected)
 		{
+			sf::Event event;
+			while (Common::window->pollEvent(event))
+			{
+				//Do Draw/Input Logic
+				Common::drawInput->Update(event);
+			}
+
 			//Process any current waiting packets. Also send a "cursor move" packet if the mouse moved.
 			if (timer.getElapsedTime().asSeconds() >= sendInterval)
 			{
@@ -34,17 +42,27 @@ int main()
 
 				timer.restart();
 			}
+		}
 
-			sf::Event event;
-			while (Common::window->pollEvent(event))
+		//Broadcast our announce packet if we are not connected. 
+		else
+		{
+			if (timer.getElapsedTime().asSeconds() >= initialAnnounceInterval)
 			{
-				//Do Draw/Input Logic
-				Common::drawInput->Update(event);
+				Common::packetSender->SendImmediate((char*)clientAnnounce, sizeof(*clientAnnounce));
+
+				timer.restart();
 			}
 		}
 
 		//Check to see if we received any new packets.
 		Common::packetListener->Update();
+
+		//Render our cursors
+		for (sf::RectangleShape* cursor : Common::cursors)
+		{
+			Common::window->draw(*cursor);
+		}
 
 		//Render our window.
 		Common::window->display();

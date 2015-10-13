@@ -4,7 +4,11 @@
 
 void PacketSender::AddPacketData(char* data, size_t length)
 {
-	m_queuedPackets.push(std::string(data, length));
+	std::string packetData;// = std::string(data, length);
+
+	packetData.assign(data, length);
+
+	m_queuedPackets.push(packetData);
 }
 
 void PacketSender::SendImmediate(char* data, size_t length)

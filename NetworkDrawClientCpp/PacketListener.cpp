@@ -17,7 +17,6 @@ void PacketListener::Update()
 
 	if (result == sf::Socket::Done)
 	{
-		//TODO read data and verify it is a correct packet.
 		Packet* rawPacket = (Packet*)&data;
 
 		switch (rawPacket->type)
@@ -47,12 +46,12 @@ void PacketListener::Update()
 				{
 					PacketServerCursors* serverCursors = (PacketServerCursors*)&data;
 
-					Common::cursors.clear();
+					//for (std::vector<sf::RectangleShape*>::iterator it = Common::cursors.begin(); it != Common::cursors.end(); ++it)
+					//{
+					//	delete (*it);
+					//}
 
-					for (sf::RectangleShape* cursor : Common::cursors)
-					{
-						delete cursor;
-					}
+					Common::cursors.clear();
 
 					for (CursorInfo cursor : serverCursors->cursor)
 					{
