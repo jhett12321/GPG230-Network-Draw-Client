@@ -45,9 +45,7 @@ void DrawInput::Update(sf::Event event)
 	{
 		clicked = true;
 
-		delete startPos;
-
-		*startPos = sf::Mouse::getPosition(*Common::window);
+		startPos = sf::Mouse::getPosition(*Common::window);
 	}
 
 	switch (mode)
@@ -79,28 +77,28 @@ void DrawInput::Update(sf::Event event)
 
 				box.type = Packet::e_box;
 
-				if (startPos->x < mousePos.x)
+				if (startPos.x < mousePos.x)
 				{
-					box.x = startPos->x;
-					box.w = mousePos.x - startPos->x;
+					box.x = startPos.x;
+					box.w = mousePos.x - startPos.x;
 				}
 
 				else
 				{
 					box.x = mousePos.x;
-					box.w = startPos->x - mousePos.x;
+					box.w = startPos.x - mousePos.x;
 				}
 
-				if (startPos->y < mousePos.y)
+				if (startPos.y < mousePos.y)
 				{
-					box.y = startPos->y;
-					box.h = mousePos.y - startPos->y;
+					box.y = startPos.y;
+					box.h = mousePos.y - startPos.y;
 				}
 
 				else
 				{
 					box.y = mousePos.y;
-					box.h = startPos->y - mousePos.y;
+					box.h = startPos.y - mousePos.y;
 				}
 
 				box.r = 1.0f;
@@ -120,8 +118,8 @@ void DrawInput::Update(sf::Event event)
 
 				line.type = Packet::e_line;
 
-				line.x1 = startPos->x;
-				line.y1 = startPos->y;
+				line.x1 = startPos.x;
+				line.y1 = startPos.y;
 
 				line.x2 = sf::Mouse::getPosition(*Common::window).x;
 				line.y2 = sf::Mouse::getPosition(*Common::window).y;
@@ -143,34 +141,34 @@ void DrawInput::Update(sf::Event event)
 
 				circle.type = Packet::e_circle;
 
-				circle.x = startPos->x;
-				circle.y = startPos->y;
+				circle.x = startPos.x;
+				circle.y = startPos.y;
 
 				float currentRadius = 0.0f;
 
-				if (startPos->x < mousePos.x)
+				if (startPos.x < mousePos.x)
 				{
-					currentRadius = mousePos.x - startPos->x;
+					currentRadius = mousePos.x - startPos.x;
 				}
 
 				else
 				{
-					currentRadius = startPos->x - mousePos.x;
+					currentRadius = startPos.x - mousePos.x;
 				}
 
-				if (startPos->y < mousePos.y)
+				if (startPos.y < mousePos.y)
 				{
-					if (currentRadius < mousePos.y - startPos->y)
+					if (currentRadius < mousePos.y - startPos.y)
 					{
-						currentRadius = mousePos.y - startPos->y;
+						currentRadius = mousePos.y - startPos.y;
 					}
 				}
 
 				else
 				{
-					if (currentRadius < startPos->y - mousePos.y)
+					if (currentRadius < startPos.y - mousePos.y)
 					{
-						currentRadius = startPos->y - mousePos.y;
+						currentRadius = startPos.y - mousePos.y;
 					}
 				}
 

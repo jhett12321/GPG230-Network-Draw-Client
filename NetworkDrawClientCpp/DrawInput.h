@@ -21,7 +21,7 @@ public:
 	bool clicked = false;
 	bool mouseMoved = false;
 
-	sf::Vector2i* startPos = new sf::Vector2i(0, 0);
+	sf::Vector2i startPos = sf::Vector2i(0, 0);
 	sf::Vector2i mousePos = sf::Vector2i(0, 0);
 
 	Mode mode = PIXEL;
