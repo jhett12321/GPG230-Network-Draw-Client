@@ -9,7 +9,20 @@
 
 bool PacketListener::Update()
 {
-	char data[100];
+	union
+	{
+		char data[100];
+
+		Packet basePacket;
+		PacketBox packetBox;
+		PacketLine packetLine;
+		PacketCircle packetCircle;
+		PacketClientCursor packetClientCursor;
+		PacketClientAnnounce packetClientAnnounce;
+		PacketServerInfo packetServerInfo;
+		PacketServerCursors packetServerCursors;
+
+	} UPacket;
 
 	std::size_t received;
 
@@ -17,13 +30,11 @@ bool PacketListener::Update()
 
 	unsigned short listenPort = App::Instance().GetListenPort();
 
-	sf::Socket::Status result = App::Instance().GetSocket()->receive(data, 100, received, sender, listenPort);
+	sf::Socket::Status result = App::Instance().GetSocket()->receive(UPacket.data, 100, received, sender, listenPort);
 
 	if (result == sf::Socket::Done)
 	{
-		Packet* rawPacket = (Packet*)&data;
-
-		switch (rawPacket->type)
+		switch (UPacket.basePacket.type)
 		{
 			//This appears to be a server response. Set our window size to the values specified by the server, and set our target address to the origin of this packet.
 			//If we are already connected, ignore this packet.
@@ -31,9 +42,7 @@ bool PacketListener::Update()
 			{
 				if (!App::Instance().GetConnected())
 				{
-					PacketServerInfo* serverInfo = (PacketServerInfo*)&data;
-
-					App::Instance().GetWindow()->setSize(sf::Vector2u(serverInfo->width, serverInfo->height));
+					App::Instance().GetWindow()->setSize(sf::Vector2u(UPacket.packetServerInfo.width, UPacket.packetServerInfo.height));
 
 					if (App::Instance().GetRecipient() == nullptr)
 					{
@@ -59,8 +68,6 @@ bool PacketListener::Update()
 			{
 				if (App::Instance().GetConnected())
 				{
-					PacketServerCursors* serverCursors = (PacketServerCursors*)&data;
-
 					for (auto cursor : App::Instance().mCursors)
 					{
 						DELETE_NULLIFY(cursor);
@@ -68,7 +75,7 @@ bool PacketListener::Update()
 
 					App::Instance().mCursors.clear();
 
-					for (CursorInfo cursor : serverCursors->cursor)
+					for (CursorInfo cursor : UPacket.packetServerCursors.cursor)
 					{
 						sf::RectangleShape* cursorShape = new sf::RectangleShape(sf::Vector2f(5.0f, 5.0f));
 

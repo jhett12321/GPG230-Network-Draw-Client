@@ -5,12 +5,8 @@
 class CursorInfo
 {
 public:
-	CursorInfo() :m_posX(0), m_posY(0), m_data(0)
-	{
-	}
 	unsigned short m_posX;
 	unsigned short m_posY;
-	unsigned char m_data;
 };
 
 class Packet
