@@ -3,6 +3,7 @@
 #include "DrawInput.h"
 #include "Packet.h"
 #include "PacketSender.h"
+#include "Heatmap.h"
 
 DrawInput::DrawInput()
 {
@@ -15,6 +16,7 @@ void DrawInput::Update(sf::Event event)
 	//Close the Window
 	if (event.type == sf::Event::Closed)
 	{
+		App::Instance().GetHeatmap()->SaveToFile("heatmap.png");
 		exit(0);
 	}
 
@@ -26,6 +28,32 @@ void DrawInput::Update(sf::Event event)
 		mMousePos->x = currentMousePos.x;
 		mMousePos->y = currentMousePos.y;
 		mMouseMoved = true;
+
+		sf::Vector2u windowSize = App::Instance().GetWindow()->getSize();
+
+		if (mMousePos->x > 0 && mMousePos->y > 0 && mMousePos->x < windowSize.x && mMousePos->y < windowSize.y)
+		{
+			int index = mMousePos->x + mMousePos->y * windowSize.x;
+			App::Instance().GetHeatmap()->mPosFrequency[index]++;
+		}
+	}
+
+	//Toggle Heatmap Display
+	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Insert)
+	{
+		App::Instance().GetHeatmap()->SetDrawEnabled(!App::Instance().GetHeatmap()->GetDrawEnabled());
+	}
+
+	//Send Heatmap to draw server
+	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Pause)
+	{
+		App::Instance().GetHeatmap()->SendToServer();
+	}
+
+	//Turn off Help Display
+	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Home)
+	{
+		App::Instance().SetHelpTextEnabled(!App::Instance().GetHelpTextEnabled());
 	}
 
 	if (!mClicked)
@@ -77,7 +105,12 @@ void DrawInput::Update(sf::Event event)
 				pixel.g = 0.0f;
 				pixel.b = 0.5f;
 
+				//Send this Packet
 				App::Instance().GetPacketSender()->AddPacketData((char*)&pixel, sizeof(pixel));
+
+				//Add heat to this pixel
+				int index = pixel.x + pixel.y * App::Instance().GetWindow()->getSize().x;
+				App::Instance().GetHeatmap()->mPosFrequency[index]++;
 			}
 
 			break;
@@ -90,6 +123,7 @@ void DrawInput::Update(sf::Event event)
 
 				box.type = Packet::e_box;
 
+				//Make sure we are passing values in the correct order.
 				if (mStartPos->x < mMousePos->x)
 				{
 					box.x = mStartPos->x;
@@ -114,11 +148,47 @@ void DrawInput::Update(sf::Event event)
 					box.h = mStartPos->y - mMousePos->y;
 				}
 
+				//Clamp values to the edge of the screen
+				sf::Vector2u windowSize = App::Instance().GetWindow()->getSize();
+
+				if (box.x < 0)
+				{
+					box.x = 0;
+				}
+
+				if (box.y < 0)
+				{
+					box.y = 0;
+				}
+
+				if (box.x + box.w > windowSize.x)
+				{
+					box.w = windowSize.x - box.x;
+				}
+
+				if (box.y + box.h > windowSize.y)
+				{
+					box.h = windowSize.y - box.y;
+				}
+
 				box.r = 1.0f;
 				box.g = 0.0f;
 				box.b = 1.0f;
 
+				//Send this data.
 				App::Instance().GetPacketSender()->AddPacketData((char*)&box, sizeof(box));
+
+				//Add heat to pixels drawn by this box
+				size_t startPos = box.x + box.y * App::Instance().GetWindow()->getSize().x;
+
+				for (int i = 0; i < box.h; ++i)
+				{
+					for (int j = 0; j < box.w; ++j)
+					{
+						int index = startPos + (j + i * App::Instance().GetWindow()->getSize().y);
+						App::Instance().GetHeatmap()->mPosFrequency[index]++;
+					}
+				}
 			}
 
 			break;

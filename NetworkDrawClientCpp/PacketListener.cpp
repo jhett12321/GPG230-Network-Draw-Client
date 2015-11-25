@@ -6,6 +6,7 @@
 #include "App.h"
 #include "PacketListener.h"
 #include "Packet.h"
+#include "Heatmap.h"
 
 bool PacketListener::Update()
 {
@@ -42,7 +43,11 @@ bool PacketListener::Update()
 			{
 				if (!App::Instance().GetConnected())
 				{
+					//Set our window size.
 					App::Instance().GetWindow()->setSize(sf::Vector2u(UPacket.packetServerInfo.width, UPacket.packetServerInfo.height));
+
+					//Set our heatmap size
+					App::Instance().GetHeatmap()->UpdateWindowSize(UPacket.packetServerInfo.width, UPacket.packetServerInfo.height);
 
 					if (App::Instance().GetRecipient() == nullptr)
 					{
@@ -77,9 +82,14 @@ bool PacketListener::Update()
 
 					for (CursorInfo cursor : UPacket.packetServerCursors.cursor)
 					{
-						sf::RectangleShape* cursorShape = new sf::RectangleShape(sf::Vector2f(5.0f, 5.0f));
+						sf::RectangleShape* cursorShape = new sf::RectangleShape(sf::Vector2f(3.0f, 5.0f));
 
 						cursorShape->setPosition(cursor.m_posX, cursor.m_posY);
+
+						sf::Color randCol = sf::Color(std::rand() % 255, std::rand() % 255, std::rand() % 255);
+						cursorShape->setFillColor(randCol);
+						cursorShape->setOutlineColor(sf::Color::White);
+						cursorShape->setOutlineThickness(1.0f);
 
 						App::Instance().mCursors.push_back(cursorShape);
 					}

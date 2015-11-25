@@ -15,6 +15,7 @@ namespace sf
 class PacketSender;
 class PacketListener;
 class DrawInput;
+class Heatmap;
 
 class App
 {
@@ -47,9 +48,15 @@ protected:
 	PUBLIC_DATA_PROPERTY(unsigned short, Port); //Target port.
 	PUBLIC_DATA_PROPERTY(unsigned short, ListenPort); //Assigned automatically.
 
+	//Help Text
+	PUBLIC_DATA_PROPERTY(bool, HelpTextEnabled);
+
 	//Packet Management
 	RO_PTR_PROPERTY(PacketSender, PacketSender);
 	RO_PTR_PROPERTY(PacketListener, PacketListener);
+
+	//Heatmap
+	RO_PTR_PROPERTY(Heatmap, Heatmap);
 
 	//Client Input
 	RO_PTR_PROPERTY(DrawInput, DrawInput);

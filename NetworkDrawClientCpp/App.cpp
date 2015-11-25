@@ -4,6 +4,7 @@
 #include "DrawInput.h"
 #include "PacketSender.h"
 #include "PacketListener.h"
+#include "Heatmap.h"
 #include "Packet.h"
 
 App& App::Instance()
@@ -25,18 +26,23 @@ bool App::Init()
 	//App Status
 	mConnected = false;
 
+	mHelpTextEnabled = false;
+
 	// bind the socket to a port. If we can't bind, quit.
 	if (mSocket->bind(sf::Socket::AnyPort) != sf::Socket::Done)
 	{
 		return false;
 	}
 
-	mWindow = new sf::RenderWindow(sf::VideoMode(512, 512), "Network Draw Client (CPP)");
+	mWindow = new sf::RenderWindow(sf::VideoMode(512, 512), "Network Draw Client (CPP)", sf::Style::Titlebar | sf::Style::Close);
 	mListenPort = mSocket->getLocalPort();
 
 	//Packet Management
 	mPacketSender = new PacketSender();
 	mPacketListener = new PacketListener();
+
+	//Heatmap
+	mHeatmap = new Heatmap();
 
 	//Client Input
 	mDrawInput = new DrawInput();
@@ -46,10 +52,31 @@ bool App::Init()
 
 void App::Run()
 {
-	//Main DeltaT clock.
-	sf::Clock deltaClock;
+	//UI Text. Shows Controls, etc.
+
+	// Load Font
+	sf::Font font;
+
+	if (!font.loadFromFile("arial.ttf"))
+	{
+		// error...
+	}
+
+	// Create help text
+	sf::Text helpText;
+
+	helpText.setPosition(0, mWindow->getSize().y - 30);
+	helpText.setString("Controls:    [1] Pixel Brush (Click)    [2] Box Brush (Drag)    [3] Line Brush (Drag)    [4] Circle Brush (Drag) \n             [Insert] Heatmap View    [Pause/Break] Push Heatmap View to Server    [Home] Hide this menu.");
+	helpText.setFont(font);
+	helpText.setCharacterSize(10);
+	helpText.setStyle(sf::Text::Regular);
+
+	mHelpTextEnabled = true;
 
 	//App timers. Used for the initial handshake, connection timeouts, and queueing packets.
+
+	//Main DeltaT clock.
+	sf::Clock deltaClock;
 
 	//How often to bundle and send our queued packets.
 	float sendInterval = 0.05f;
@@ -146,13 +173,25 @@ void App::Run()
 			timeoutPeriodTimer = 0.0f;
 		}
 
+		//Clear our current window.
+		mWindow->clear();
+
+		//Render the heatmap (if enabled)
+		mHeatmap->DrawHeatmap(*mWindow);
+
 		//Render our cursors
 		for (sf::RectangleShape* cursor : mCursors)
 		{
 			mWindow->draw(*cursor);
 		}
 
-		//Render our window.
+		//Render the help UI
+		if (mHelpTextEnabled)
+		{
+			mWindow->draw(helpText);
+		}
+
+		//Display our new window.
 		mWindow->display();
 	}
 }
