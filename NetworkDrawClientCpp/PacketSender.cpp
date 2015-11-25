@@ -1,31 +1,30 @@
-#include "PacketSender.h"
-#include "Common.h"
 #include <iostream>
+#include <SFML\Network.hpp>
+#include "App.h"
+#include "PacketSender.h"
 
 void PacketSender::AddPacketData(char* data, size_t length)
 {
-	std::string packetData;// = std::string(data, length);
+	std::string packetData = std::string(data, length);
 
-	packetData.assign(data, length);
-
-	m_queuedPackets.push(packetData);
+	mQueuedPackets.push(packetData);
 }
 
 void PacketSender::SendImmediate(char* data, size_t length)
 {
-	sf::IpAddress target;
+	sf::Socket::Status sendResult;
 
-	if (Common::recipient == nullptr)
+	if (App::Instance().GetRecipient() == nullptr)
 	{
-		target = sf::IpAddress::Broadcast;
+		sendResult = App::Instance().GetSocket()->send(data, length, sf::IpAddress::Broadcast, App::Instance().GetPort());
 	}
 
 	else
 	{
-		target = *Common::recipient;
+		sendResult = App::Instance().GetSocket()->send(data, length, *App::Instance().GetRecipient(), App::Instance().GetPort());
 	}
 
-	if (Common::socket->send(data, length, target, Common::port) != sf::Socket::Done)
+	if (sendResult != sf::Socket::Done)
 	{
 		std::cout << "Error sending data" << std::endl;
 	}
@@ -33,25 +32,24 @@ void PacketSender::SendImmediate(char* data, size_t length)
 
 void PacketSender::ProcessQueue()
 {
-	if (Common::connected)
+	if (App::Instance().GetConnected())
 	{
 		std::string bundledData = "";
 
-		while (!m_queuedPackets.empty())
+		while (!mQueuedPackets.empty())
 		{
-			std::string data = m_queuedPackets.front();
+			std::string data = mQueuedPackets.front();
 
-			//TODO Bundle packets together.
 			if (bundledData.length() + data.length() < sf::UdpSocket::MaxDatagramSize)
 			{
 				bundledData.append(data);
 
-				m_queuedPackets.pop();
+				mQueuedPackets.pop();
 			}
 
 			else
 			{
-				if (Common::socket->send(bundledData.c_str(), bundledData.length(), *Common::recipient, Common::port) == sf::Socket::Done)
+				if (App::Instance().GetSocket()->send(bundledData.c_str(), bundledData.length(), *App::Instance().GetRecipient(), App::Instance().GetPort()) == sf::Socket::Done)
 				{
 					bundledData = "";
 				}
@@ -65,7 +63,7 @@ void PacketSender::ProcessQueue()
 
 		if (!bundledData.empty())
 		{
-			if (Common::socket->send(bundledData.c_str(), bundledData.length(), *Common::recipient, Common::port) != sf::Socket::Done)
+			if (App::Instance().GetSocket()->send(bundledData.c_str(), bundledData.length(), *App::Instance().GetRecipient(), App::Instance().GetPort()) != sf::Socket::Done)
 			{
 				std::cout << "Error sending data" << std::endl;
 			}

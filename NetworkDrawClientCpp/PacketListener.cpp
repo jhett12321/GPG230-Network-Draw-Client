@@ -1,19 +1,23 @@
-#include "PacketListener.h"
+#include <iostream>
 #include <SFML/Network/IpAddress.hpp>
 #include <SFML/Network/Socket.hpp>
-#include "Common.h"
-#include <iostream>
+#include <SFML\Network\UdpSocket.hpp>
+#include <SFML\Graphics.hpp>
+#include "App.h"
+#include "PacketListener.h"
 #include "Packet.h"
 
-void PacketListener::Update()
+bool PacketListener::Update()
 {
 	char data[100];
 
 	std::size_t received;
 
-	sf::IpAddress* sender = new sf::IpAddress();
+	sf::IpAddress sender;
 
-	sf::Socket::Status result = Common::socket->receive(data, 100, received, *sender, Common::listenPort);
+	unsigned short listenPort = App::Instance().GetListenPort();
+
+	sf::Socket::Status result = App::Instance().GetSocket()->receive(data, 100, received, sender, listenPort);
 
 	if (result == sf::Socket::Done)
 	{
@@ -25,15 +29,26 @@ void PacketListener::Update()
 			//If we are already connected, ignore this packet.
 			case Packet::e_serverInfo:
 			{
-				if (!Common::connected)
+				if (!App::Instance().GetConnected())
 				{
 					PacketServerInfo* serverInfo = (PacketServerInfo*)&data;
 
-					Common::window->setSize(sf::Vector2u(serverInfo->width, serverInfo->height));
-					Common::recipient = sender;
+					App::Instance().GetWindow()->setSize(sf::Vector2u(serverInfo->width, serverInfo->height));
+
+					if (App::Instance().GetRecipient() == nullptr)
+					{
+						App::Instance().SetRecipient(new sf::IpAddress(sender));
+					}
+
+					else
+					{
+						sf::IpAddress* oldAddr = App::Instance().GetRecipient();
+						DELETE_NULLIFY(oldAddr);
+						App::Instance().SetRecipient(new sf::IpAddress(sender));
+					}
 
 					//We are now connected.
-					Common::connected = true;
+					App::Instance().SetConnected(true);
 				}
 
 				break;
@@ -42,16 +57,16 @@ void PacketListener::Update()
 			//This is a packet containing other client cursors.
 			case Packet::e_serverCursors:
 			{
-				if (Common::connected)
+				if (App::Instance().GetConnected())
 				{
 					PacketServerCursors* serverCursors = (PacketServerCursors*)&data;
 
-					//for (std::vector<sf::RectangleShape*>::iterator it = Common::cursors.begin(); it != Common::cursors.end(); ++it)
-					//{
-					//	delete (*it);
-					//}
+					for (auto cursor : App::Instance().mCursors)
+					{
+						DELETE_NULLIFY(cursor);
+					}
 
-					Common::cursors.clear();
+					App::Instance().mCursors.clear();
 
 					for (CursorInfo cursor : serverCursors->cursor)
 					{
@@ -59,23 +74,21 @@ void PacketListener::Update()
 
 						cursorShape->setPosition(cursor.m_posX, cursor.m_posY);
 
-						Common::cursors.push_back(cursorShape);
+						App::Instance().mCursors.push_back(cursorShape);
 					}
 				}
 
 				break;
 			}
-
-			//We received a packet type that we can't understand.
-			default:
-			{
-				return;
-			}
 		}
+
+		return true;
 	}
 
 	else if (result != sf::Socket::Done && result != sf::Socket::NotReady)
 	{
 		std::cout << "Error receiving data" << std::endl;
 	}
+
+	return false;
 }

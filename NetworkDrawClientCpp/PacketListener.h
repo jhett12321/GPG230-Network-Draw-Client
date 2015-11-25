@@ -4,7 +4,8 @@
 class PacketListener
 {
 public:
-	void Update();
+	//Returns true if we received any packets this tick.
+	bool Update();
 };
 
 #endif

@@ -88,11 +88,12 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PacketListener.cpp" />
     <ClCompile Include="PacketSender.cpp" />
-    <ClCompile Include="Common.cpp" />
+    <ClCompile Include="App.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Common.h" />
+    <ClInclude Include="App.h" />
     <ClInclude Include="DrawInput.h" />
+    <ClInclude Include="Macros.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="PacketListener.h" />
     <ClInclude Include="PacketSender.h" />

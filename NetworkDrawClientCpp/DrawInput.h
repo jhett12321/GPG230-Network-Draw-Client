@@ -1,8 +1,13 @@
 #ifndef DRAWINPUT_H
 #define DRAWINPUT_H
 
-#include <queue>
-#include "SFML\Graphics.hpp"
+#include <SFML\System\Vector2.hpp>
+#include "Macros.h"
+
+namespace sf
+{
+	class Event;
+}
 
 enum Mode
 {
@@ -18,13 +23,15 @@ public:
 	void Update(sf::Event event);
 	void CheckMouseMoved();
 
-	bool clicked = false;
-	bool mouseMoved = false;
+protected:
+	RO_DATA_PROPERTY(bool, Clicked);
+	RO_DATA_PROPERTY(bool, MouseMoved);
+	RO_DATA_PROPERTY(Mode, Mode);
 
-	sf::Vector2i startPos = sf::Vector2i(0, 0);
-	sf::Vector2i mousePos = sf::Vector2i(0, 0);
+	RO_PTR_PROPERTY(sf::Vector2i, StartPos);
+	RO_PTR_PROPERTY(sf::Vector2i, MousePos);
 
-	Mode mode = PIXEL;
+	DrawInput();
 };
 
 #endif

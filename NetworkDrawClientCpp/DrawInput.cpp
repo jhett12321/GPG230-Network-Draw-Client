@@ -1,7 +1,14 @@
+#include <SFML/Graphics.hpp>
+#include "App.h"
 #include "DrawInput.h"
 #include "Packet.h"
-#include "SFML/Graphics.hpp"
-#include "Common.h"
+#include "PacketSender.h"
+
+DrawInput::DrawInput()
+{
+	mMousePos = new sf::Vector2i(0, 0);
+	mStartPos = new sf::Vector2i(0, 0);
+}
 
 void DrawInput::Update(sf::Event event)
 {
@@ -14,41 +21,47 @@ void DrawInput::Update(sf::Event event)
 	//The Mouse Moved.
 	if (event.type == sf::Event::MouseMoved)
 	{
-		mousePos = sf::Mouse::getPosition(*Common::window);
-		mouseMoved = true;
+		sf::Vector2i currentMousePos = sf::Mouse::getPosition(*App::Instance().GetWindow());
+
+		mMousePos->x = currentMousePos.x;
+		mMousePos->y = currentMousePos.y;
+		mMouseMoved = true;
 	}
 
-	if (!clicked)
+	if (!mClicked)
 	{
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1))
 		{
-			mode = PIXEL;
+			mMode = PIXEL;
 		}
 
 		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num2))
 		{
-			mode = BOX;
+			mMode = BOX;
 		}
 
 		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num3))
 		{
-			mode = LINE;
+			mMode = LINE;
 		}
 
 		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num4))
 		{
-			mode = CIRCLE;
+			mMode = CIRCLE;
 		}
 	}
 
-	if (!clicked && sf::Mouse::isButtonPressed(sf::Mouse::Left))
+	if (!mClicked && sf::Mouse::isButtonPressed(sf::Mouse::Left))
 	{
-		clicked = true;
+		sf::Vector2i currentMousePos = sf::Mouse::getPosition(*App::Instance().GetWindow());
 
-		startPos = sf::Mouse::getPosition(*Common::window);
+		mStartPos->x = currentMousePos.x;
+		mStartPos->y = currentMousePos.y;
+
+		mClicked = true;
 	}
 
-	switch (mode)
+	switch (mMode)
 	{
 		case PIXEL:
 		{
@@ -57,118 +70,118 @@ void DrawInput::Update(sf::Event event)
 				PacketPixel pixel;
 				pixel.type = Packet::e_pixel;
 
-				pixel.x = mousePos.x;
-				pixel.y = mousePos.y;
+				pixel.x = mMousePos->x;
+				pixel.y = mMousePos->y;
 
 				pixel.r = 1.0f;
 				pixel.g = 0.0f;
 				pixel.b = 0.5f;
 
-				Common::packetSender->AddPacketData((char*)&pixel, sizeof(pixel));
+				App::Instance().GetPacketSender()->AddPacketData((char*)&pixel, sizeof(pixel));
 			}
 
 			break;
 		}
 		case BOX:
 		{
-			if (clicked && !sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			if (mClicked && !sf::Mouse::isButtonPressed(sf::Mouse::Left))
 			{
 				PacketBox box;
 
 				box.type = Packet::e_box;
 
-				if (startPos.x < mousePos.x)
+				if (mStartPos->x < mMousePos->x)
 				{
-					box.x = startPos.x;
-					box.w = mousePos.x - startPos.x;
+					box.x = mStartPos->x;
+					box.w = mMousePos->x - mStartPos->x;
 				}
 
 				else
 				{
-					box.x = mousePos.x;
-					box.w = startPos.x - mousePos.x;
+					box.x = mMousePos->x;
+					box.w = mStartPos->x - mMousePos->x;
 				}
 
-				if (startPos.y < mousePos.y)
+				if (mStartPos->y < mMousePos->y)
 				{
-					box.y = startPos.y;
-					box.h = mousePos.y - startPos.y;
+					box.y = mStartPos->y;
+					box.h = mMousePos->y - mStartPos->y;
 				}
 
 				else
 				{
-					box.y = mousePos.y;
-					box.h = startPos.y - mousePos.y;
+					box.y = mMousePos->y;
+					box.h = mStartPos->y - mMousePos->y;
 				}
 
 				box.r = 1.0f;
 				box.g = 0.0f;
 				box.b = 1.0f;
 
-				Common::packetSender->AddPacketData((char*)&box, sizeof(box));
+				App::Instance().GetPacketSender()->AddPacketData((char*)&box, sizeof(box));
 			}
 
 			break;
 		}
 		case LINE:
 		{
-			if (clicked && !sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			if (mClicked && !sf::Mouse::isButtonPressed(sf::Mouse::Left))
 			{
 				PacketLine line;
 
 				line.type = Packet::e_line;
 
-				line.x1 = startPos.x;
-				line.y1 = startPos.y;
+				line.x1 = mStartPos->x;
+				line.y1 = mStartPos->y;
 
-				line.x2 = sf::Mouse::getPosition(*Common::window).x;
-				line.y2 = sf::Mouse::getPosition(*Common::window).y;
+				line.x2 = sf::Mouse::getPosition(*App::Instance().GetWindow()).x;
+				line.y2 = sf::Mouse::getPosition(*App::Instance().GetWindow()).y;
 
 				line.r = 1.0f;
 				line.g = 0.0f;
 				line.b = 0.0f;
 
-				Common::packetSender->AddPacketData((char*)&line, sizeof(line));
+				App::Instance().GetPacketSender()->AddPacketData((char*)&line, sizeof(line));
 			}
 
 			break;
 		}
 		case CIRCLE:
 		{
-			if (clicked && !sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			if (mClicked && !sf::Mouse::isButtonPressed(sf::Mouse::Left))
 			{
 				PacketCircle circle;
 
 				circle.type = Packet::e_circle;
 
-				circle.x = startPos.x;
-				circle.y = startPos.y;
+				circle.x = mStartPos->x;
+				circle.y = mStartPos->y;
 
-				float currentRadius = 0.0f;
+				int currentRadius = 0;
 
-				if (startPos.x < mousePos.x)
+				if (mStartPos->x < mMousePos->x)
 				{
-					currentRadius = mousePos.x - startPos.x;
+					currentRadius = mMousePos->x - mStartPos->x;
 				}
 
 				else
 				{
-					currentRadius = startPos.x - mousePos.x;
+					currentRadius = mStartPos->x - mMousePos->x;
 				}
 
-				if (startPos.y < mousePos.y)
+				if (mStartPos->y < mMousePos->y)
 				{
-					if (currentRadius < mousePos.y - startPos.y)
+					if (currentRadius < mMousePos->y - mStartPos->y)
 					{
-						currentRadius = mousePos.y - startPos.y;
+						currentRadius = mMousePos->y - mStartPos->y;
 					}
 				}
 
 				else
 				{
-					if (currentRadius < startPos.y - mousePos.y)
+					if (currentRadius < mStartPos->y - mMousePos->y)
 					{
-						currentRadius = startPos.y - mousePos.y;
+						currentRadius = mStartPos->y - mMousePos->y;
 					}
 				}
 
@@ -178,7 +191,7 @@ void DrawInput::Update(sf::Event event)
 				circle.g = 0.0f;
 				circle.b = 1.0f;
 
-				Common::packetSender->AddPacketData((char*)&circle, sizeof(circle));
+				App::Instance().GetPacketSender()->AddPacketData((char*)&circle, sizeof(circle));
 			}
 
 			break;
@@ -187,27 +200,33 @@ void DrawInput::Update(sf::Event event)
 
 	if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
 	{
-		if (clicked)
-			clicked = false;
+		if (mClicked)
+			mClicked = false;
 	}
 }
 
 void DrawInput::CheckMouseMoved()
 {
-	if (mouseMoved)
+	if (mMouseMoved)
 	{
 		CursorInfo cursorInfo;
 
-		cursorInfo.m_posX = mousePos.x;
-		cursorInfo.m_posY = mousePos.y;
+		cursorInfo.m_posX = mMousePos->x;
+		cursorInfo.m_posY = mMousePos->y;
 
-		PacketClientCursor clientCursorPacket;
+		sf::Vector2u windowSize = App::Instance().GetWindow()->getSize();
 
-		clientCursorPacket.type = Packet::e_clientCursor;
-		clientCursorPacket.cursor = cursorInfo;
+		if (mMousePos->x > 0 && mMousePos->y > 0 && mMousePos->x < windowSize.x && mMousePos->y < windowSize.y)
+		{
+			PacketClientCursor clientCursorPacket;
 
-		//Common::packetSender->AddPacketData((char*)&clientCursorPacket, sizeof(clientCursorPacket));
-		mouseMoved = false;
+			clientCursorPacket.type = Packet::e_clientCursor;
+			clientCursorPacket.cursor = cursorInfo;
+
+			App::Instance().GetPacketSender()->AddPacketData((char*)&clientCursorPacket, sizeof(clientCursorPacket));
+		}
+
+		mMouseMoved = false;
 	}
 }
 
