@@ -65,11 +65,16 @@ void App::Run()
 	// Create help text
 	sf::Text helpText;
 
-	helpText.setPosition(0, mWindow->getSize().y - 30);
-	helpText.setString("Controls:    [1] Pixel Brush (Click)    [2] Box Brush (Drag)    [3] Line Brush (Drag)    [4] Circle Brush (Drag) \n             [Insert] Heatmap View    [Pause/Break] Push Heatmap View to Server    [Home] Hide this menu.");
+	helpText.setPosition(10, mWindow->getSize().y - 30);
+	helpText.setString("Controls: [1] Pixel Brush (Click)    [2] Box Brush (Drag)    [3] Line Brush (Drag)    [4] Circle Brush (Drag) \n              [Insert] Heatmap View    [Pause/Break] Push Heatmap View to Server    [Home] Hide this menu.");
 	helpText.setFont(font);
 	helpText.setCharacterSize(10);
 	helpText.setStyle(sf::Text::Regular);
+
+	sf::Text helpTextOutline = sf::Text(helpText);
+
+	helpTextOutline.setCharacterSize(10);
+	helpTextOutline.setColor(sf::Color::Black);
 
 	mHelpTextEnabled = true;
 
@@ -85,10 +90,6 @@ void App::Run()
 	//How often to attempt an initial handshake.
 	float initialAnnounceInterval = 2.0f;
 	float initialAnnounceIntervalTimer = 0.0f;
-
-	//How often to force through a cursor packet (for keepAlive).
-	float keepAliveInterval = 2.0f;
-	float keepAliveIntervalTimer = 0.0f;
 
 	//How long to wait without receiving a packet before attempting to re-establish a new connection.
 	float timeoutPeriod = 5.0f;
@@ -115,15 +116,6 @@ void App::Run()
 		if (mConnected)
 		{
 			sendIntervalTimer += deltaTime;
-			keepAliveIntervalTimer += deltaTime;
-
-			//Queue our keep alive packet.
-			if (keepAliveIntervalTimer >= keepAliveInterval)
-			{
-				mPacketSender->AddPacketData((char*)clientAnnounce, sizeof(*clientAnnounce));
-
-				keepAliveIntervalTimer = 0.0f;
-			}
 
 			//Process any current waiting packets. Also send a "cursor move" packet if the mouse moved.
 			if (sendIntervalTimer >= sendInterval)
@@ -188,6 +180,7 @@ void App::Run()
 		//Render the help UI
 		if (mHelpTextEnabled)
 		{
+			mWindow->draw(helpTextOutline);
 			mWindow->draw(helpText);
 		}
 

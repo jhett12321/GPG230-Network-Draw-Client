@@ -248,8 +248,7 @@ void Heatmap::SendToServer()
 			pixel.b = outputColor.b;
 
 			//Send this Packet
-			//App::Instance().GetPacketSender()->AddPacketData((char*)&pixel, sizeof(pixel));
-			App::Instance().GetPacketSender()->SendImmediate((char*)&pixel, sizeof(pixel));
+			App::Instance().GetPacketSender()->AddPacketData((char*)&pixel, sizeof(pixel));
 		}
 	}
 }

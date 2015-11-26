@@ -12,7 +12,7 @@ bool PacketListener::Update()
 {
 	union
 	{
-		char data[100];
+		char data[10000];
 
 		Packet basePacket;
 		PacketBox packetBox;

@@ -277,26 +277,23 @@ void DrawInput::Update(sf::Event event)
 
 void DrawInput::CheckMouseMoved()
 {
-	if (mMouseMoved)
+	CursorInfo cursorInfo;
+
+	cursorInfo.m_posX = mMousePos->x;
+	cursorInfo.m_posY = mMousePos->y;
+
+	sf::Vector2u windowSize = App::Instance().GetWindow()->getSize();
+
+	if (mMousePos->x > 0 && mMousePos->y > 0 && mMousePos->x < windowSize.x && mMousePos->y < windowSize.y)
 	{
-		CursorInfo cursorInfo;
+		PacketClientCursor clientCursorPacket;
 
-		cursorInfo.m_posX = mMousePos->x;
-		cursorInfo.m_posY = mMousePos->y;
+		clientCursorPacket.type = Packet::e_clientCursor;
+		clientCursorPacket.cursor = cursorInfo;
 
-		sf::Vector2u windowSize = App::Instance().GetWindow()->getSize();
-
-		if (mMousePos->x > 0 && mMousePos->y > 0 && mMousePos->x < windowSize.x && mMousePos->y < windowSize.y)
-		{
-			PacketClientCursor clientCursorPacket;
-
-			clientCursorPacket.type = Packet::e_clientCursor;
-			clientCursorPacket.cursor = cursorInfo;
-
-			App::Instance().GetPacketSender()->AddPacketData((char*)&clientCursorPacket, sizeof(clientCursorPacket));
-		}
-
-		mMouseMoved = false;
+		App::Instance().GetPacketSender()->AddPacketData((char*)&clientCursorPacket, sizeof(clientCursorPacket));
 	}
+
+	mMouseMoved = false;
 }
 
